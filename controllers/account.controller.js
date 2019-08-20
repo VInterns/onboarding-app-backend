@@ -18,6 +18,7 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   try {
+    console.log("logiiiiiiiin");
     var user = await User.findOne({
       password: req.body.password,
       email: req.body.email
@@ -31,7 +32,7 @@ router.post("/login", async (req, res) => {
         )
       });
     } else {
-      return res.status(404).send("Invalid NT or Password.");
+      return res.status(500).send("Invalid NT or Password.");
     }
   } catch (error) {
     return res.status(400).send(error.message);

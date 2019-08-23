@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-mongoose.connect("mongodb://localhost:27017/EventApp", err => {
+mongoose.connect("mongodb://localhost:27017/OnBoarding", err => {
   if (!err) console.log("MongoDB connection succeeded.");
   else
     console.log(

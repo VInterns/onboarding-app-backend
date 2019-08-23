@@ -23,11 +23,12 @@ router.post("/login", async (req, res) => {
       password: req.body.password,
       email: req.body.email
     });
+    console.log(user);
 
     if (user) {
       return res.json({
         token: jwt.sign(
-          { email: user.email, name: user.name, _id: user._id },
+          { email: user.email, _id: user._id },
           "key"
         )
       });

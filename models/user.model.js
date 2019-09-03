@@ -19,9 +19,10 @@ const UserSchema = new Schema({
     type: String,
     required: true
   },
-  dietary: [String],
-  allergies: [String]
-
+  lastSection:{
+    type: Number,
+    required: true
+  }
 });
 
 var User = mongoose.model("User", UserSchema);

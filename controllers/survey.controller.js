@@ -27,7 +27,6 @@ router.post("/addSurvey", async (req, res) => {
     }
 
     // const user = new User({});
-
 });
 
 

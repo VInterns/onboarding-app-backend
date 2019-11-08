@@ -1,7 +1,7 @@
 var express = require("express");
 var router = express.Router();
 var jwt = require("jsonwebtoken");
-var { userSchema } = require("../models/user.model");
+var { User } = require("../models/user.model");
 var auth = require("../middleware/auth");
 // const upload = require('./upload');
 // const cors = require('cors');
@@ -64,7 +64,7 @@ router.post("/bulkRegister", async (req, res) => {
     }
 
     else {
-      console.log('insdie else, data.lenght --> ', data.length);
+      console.log('insdie else, data.lenght --> ', data);
       for (var i = 0; i < data.length; i++) {
 
         // var role = await Role.findOne({ 'name': rows[i][3] });
@@ -89,7 +89,7 @@ router.post("/bulkRegister", async (req, res) => {
           var userByEmail = await User.findOne({ email: data[i].email });
           if (!userByEmail) {
 
-            const User = mongoose.model('User', userSchema); 
+            // const User = mongoose.model('User', userSchema); 
             var newUser = new User({
               userName: data[i].userName,
               email: data[i].email,
@@ -99,8 +99,9 @@ router.post("/bulkRegister", async (req, res) => {
               useful: data[i].useful,
             });
             console.log('newUser before save--> ',newUser);
-            // const result = await newUser.save();
-            await newUser.save();
+            const result = await newUser.save();
+            console.log(result);
+            // await newUser.save();
           }
         }
       }

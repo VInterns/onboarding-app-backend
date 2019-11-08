@@ -20,19 +20,7 @@ const UserSchema = new Schema({
     required: true
   },
   lastSection:{
-    type: String,
-    required: false
-  },
-  useful:{
-    type:Number,
-    required: true
-  },
-  enggaging:{
     type: Number,
-    required: true
-  },
-  comment:{
-    type:String,
     required: false
   }
 });

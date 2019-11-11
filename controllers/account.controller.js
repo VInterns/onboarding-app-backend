@@ -37,10 +37,7 @@ router.post("/bulkRegister", async (req, res) => {
 
     for (var i = 0; i < req.body.Sheet1.length; i++) {
 
-      // var role = await Role.findOne({ 'name': rows[i][3] });
-      // var segment = await Segment.findOne({ 'name': rows[i][4] });
-      // var country = await Country.findOne({ 'name': rows[i][5] });
-      // var site = await Site.findOne({ 'name': rows[i][6] });
+    
       console.log('inside for loop',req.body.Sheet1[i].userName);
       var uploadUser = {
         userName: req.body.Sheet1[i].userName,
@@ -66,11 +63,6 @@ router.post("/bulkRegister", async (req, res) => {
     else {
       console.log('insdie else, data.lenght --> ', data);
       for (var i = 0; i < data.length; i++) {
-
-        // var role = await Role.findOne({ 'name': rows[i][3] });
-        // var segment = await Segment.findOne({ 'name': rows[i][4] });
-        // var country = await Country.findOne({ 'name': rows[i][5] });
-        // var site = await Site.findOne({ 'name': rows[i][6] });
 
         var user = await User.findOne({ email: data[i].email });
         if (user) {

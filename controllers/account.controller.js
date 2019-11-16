@@ -3,6 +3,7 @@ var router = express.Router();
 var jwt = require("jsonwebtoken");
 var { User } = require("../models/user.model");
 var auth = require("../middleware/auth");
+var nodemailer = require('nodemailer');
 // const upload = require('./upload');
 // const cors = require('cors');
 
@@ -37,7 +38,6 @@ router.post("/bulkRegister", async (req, res) => {
 
     for (var i = 0; i < req.body.Sheet1.length; i++) {
 
-    
       console.log('inside for loop',req.body.Sheet1[i].userName);
       var uploadUser = {
         userName: req.body.Sheet1[i].userName,
@@ -70,6 +70,7 @@ router.post("/bulkRegister", async (req, res) => {
             userName: data[i].userName,
             email: data[i].email,
             mobileNumber: data[i].mobileNumber,
+            password:'123',
             company: data[i].company,
             enggaging: data[i].enggaging,
             useful: data[i].useful,
@@ -86,12 +87,17 @@ router.post("/bulkRegister", async (req, res) => {
               userName: data[i].userName,
               email: data[i].email,
               mobileNumber: data[i].mobileNumber,
+              password:'123',
               company: data[i].company,
               enggaging: data[i].enggaging,
               useful: data[i].useful,
             });
-            console.log('newUser before save--> ',newUser);
+            console.log('newUser after save--> ',newUser);
             const result = await newUser.save();
+            if (result) {
+              sendEmail(result.email);
+              
+            }
             console.log(result);
             // await newUser.save();
           }
@@ -132,5 +138,40 @@ router.post("/login", async (req, res) => {
 router.get("/authData", auth, async (req, res) => {
   res.json({ message: "Authenication", data: req.user });
 });
+
+
+
+
+
+
+function sendEmail(mailTo) {
+  console.log('inside sendEmail')
+  var transporter = nodemailer.createTransport({
+    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    requireTLS: true,
+    auth: {
+      user: 'm.osamaalmokadem@gmail.com',
+      pass: 'loveyoubaby'
+    }
+  });
+  
+  var mailOptions = {
+    from: 'm.osamaalmokadem@gmail.com',
+    to: 'mohskimo@gmail.com',
+    subject: 'Sending Email using Node.js',
+    text: 'That was easy!'
+  };
+  
+  transporter.sendMail(mailOptions, function(error, info){
+    if (error) {
+      console.log(error);
+    } else {
+      console.log('Email sent: ' + info.response);
+    }
+  });
+}
 
 module.exports = router;

@@ -13,7 +13,7 @@ const UserSchema = new Schema({
   },
   password: {
     type: String,
-    required: true
+    required: false
   },
   mobileNumber: {
     type: String,
@@ -25,11 +25,11 @@ const UserSchema = new Schema({
   },
   useful:{
     type:Number,
-    required: true
+    required: false
   },
   enggaging:{
     type: Number,
-    required: true
+    required: false
   },
   comment:{
     type:String,

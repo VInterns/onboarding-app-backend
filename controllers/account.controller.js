@@ -3,7 +3,11 @@ var router = express.Router();
 var jwt = require("jsonwebtoken");
 var { User } = require("../models/user.model");
 var auth = require("../middleware/auth");
-var nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
+var mustache = require('mustache');
+// const template = require("../utils/mailtemplate.html");
+// var nodemailer = require("../utils/nodemailler");
+
 // const upload = require('./upload');
 // const cors = require('cors');
 
@@ -27,9 +31,9 @@ router.post("/register", async (req, res) => {
 
 router.post("/bulkRegister", async (req, res) => {
 
-  console.log('some on called bulkRegister api', req.body.Sheet1,req.body.Sheet1.length);
+  console.log('some on called bulkRegister api', req.body.Sheet1, req.body.Sheet1.length);
   let data = req.body.Sheet1;
-  console.log('data is --> ', data);
+  // console.log('data is --> ', data);
   try {
 
     // await fs.writeFileSync("./Public/Excel/Users/newUsers.xlsx", req.file.buffer);
@@ -38,16 +42,19 @@ router.post("/bulkRegister", async (req, res) => {
 
     for (var i = 0; i < req.body.Sheet1.length; i++) {
 
-      console.log('inside for loop',req.body.Sheet1[i].userName);
+      // console.log('inside for loop',req.body.Sheet1[i].userName);
       var uploadUser = {
-        userName: req.body.Sheet1[i].userName,
+        fullName: req.body.Sheet1[i].fullName,
         email: req.body.Sheet1[i].email,
-        mobileNumber: req.body.Sheet1[i].mobileNumber,
+        staffId: req.body.Sheet1[i].staffId,
+        firstName: req.body.Sheet1[i].firstName,
+        lastName: req.body.Sheet1[i].lastName,
+        department: req.body.Sheet1[i].department,
         company: req.body.Sheet1[i].company,
         enggaging: req.body.Sheet1[i].enggaging,
         useful: req.body.Sheet1[i].useful,
       }
-      console.log('uploadUser --> ',uploadUser);
+      console.log('uploadUser --> ', uploadUser);
 
     }
     // const result = Joi.validate(uploadUser, UserValidation);
@@ -55,48 +62,57 @@ router.post("/bulkRegister", async (req, res) => {
     //   // errorResult.push(`Row: ${i + 1} ==> ${result.error.details[0].message}`);
     // }
 
-    if (errorResult.length > 0){
-      console.log('errorResult --> ', errorResult);
+    if (errorResult.length > 0) {
+      // console.log('errorResult --> ', errorResult);
       return res.status(400).send(errorResult);
     }
 
     else {
-      console.log('insdie else, data.lenght --> ', data);
+      // console.log('insdie else, data.lenght --> ', data);
       for (var i = 0; i < data.length; i++) {
 
         var user = await User.findOne({ email: data[i].email });
         if (user) {
           user.set({
-            userName: data[i].userName,
+            fullName: data[i].fullName,
             email: data[i].email,
-            mobileNumber: data[i].mobileNumber,
-            password:'123',
+            staffId: data[i].staffId,
+            firstName: data[i].firstName,
+            lastName: data[i].lastName,
+            password: '123',
+            department: data[i].department,
             company: data[i].company,
             enggaging: data[i].enggaging,
             useful: data[i].useful,
           });
-          console.log('user before save--> ',user);
+          console.log('existed user before save--> ', user);
           await user.save();
         }
         else {
           var userByEmail = await User.findOne({ email: data[i].email });
           if (!userByEmail) {
 
-            // const User = mongoose.model('User', userSchema); 
             var newUser = new User({
-              userName: data[i].userName,
+              fullName: data[i].fullName,
               email: data[i].email,
-              mobileNumber: data[i].mobileNumber,
-              password:'123',
+              staffId: data[i].staffId,
+              firstName: data[i].firstName,
+              lastName: data[i].lastName,
+              department: data[i].department,
+              password: '123',
               company: data[i].company,
               enggaging: data[i].enggaging,
               useful: data[i].useful,
             });
-            console.log('newUser after save--> ',newUser);
+            console.log('newUser after save--> ', newUser);
             const result = await newUser.save();
+            console.log('result of save', result);
             if (result) {
-              sendEmail(result.email);
-              
+              console.log('nodemailer to --> ', result.email);
+
+              sendEmail(result);
+
+
             }
             console.log(result);
             // await newUser.save();
@@ -140,38 +156,60 @@ router.get("/authData", auth, async (req, res) => {
 });
 
 
+router.get("/users", async (req, res) => {
 
-
-
-
-function sendEmail(mailTo) {
-  console.log('inside sendEmail')
-  var transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    requireTLS: true,
-    auth: {
-      user: 'm.osamaalmokadem@gmail.com',
-      pass: 'loveyoubaby'
-    }
-  });
-  
-  var mailOptions = {
-    from: 'm.osamaalmokadem@gmail.com',
-    to: 'mohskimo@gmail.com',
-    subject: 'Sending Email using Node.js',
-    text: 'That was easy!'
-  };
-  
-  transporter.sendMail(mailOptions, function(error, info){
+  let users = await User.find( function(error , response){
+    
     if (error) {
-      console.log(error);
-    } else {
-      console.log('Email sent: ' + info.response);
+      res.send(error);
+    }else{
+      console.log('response', response);
+      res.send(response);
     }
   });
+
+});
+
+
+function sendEmail(user) {
+  fs.readFile('./utils/passwordTemplate.html', 'utf8',
+    function (err, mailTemplate) {
+      if (err) throw err;
+      console.log('inside sendEmail mailTo is-->', user);
+      // TODO: make the mail template ready
+      let actualMail = mustache.render(mailTemplate, user);
+
+      let transporter = nodemailer.createTransport({
+        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        requireTLS: true,
+        auth: {
+          user: 'm.osamaalmokadem@gmail.com',
+          pass: 'loveyoubaby'
+        }
+      });
+
+      let mailOptions = {
+        from: 'm.osamaalmokadem@gmail.com',
+        to: user.email,
+        subject: 'Welcome ' +user.fullName+' to Vodafone',
+        html: actualMail
+      };
+
+      transporter.sendMail(mailOptions,
+        function (error, info) {
+          if (error) {
+            throw error
+          } else {
+            console.log('Email sent: ' + info.response);
+          }
+        });
+    });
+
 }
+
+
 
 module.exports = router;

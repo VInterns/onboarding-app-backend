@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 
 // Create Schema
 const UserSchema = new Schema({
-  userName: {
+  fullName: {
     type: String,
     required: true
   },
@@ -13,11 +13,23 @@ const UserSchema = new Schema({
   },
   password: {
     type: String,
+    required: true
+  },
+  staffId: {
+    type: String,
     required: false
   },
-  mobileNumber: {
+  firstName:{
     type: String,
-    required: true
+    required: false
+  },
+  lastName:{
+    type: String,
+    required: false
+  },
+  department:{
+    type: String,
+    required: false
   },
   lastSection:{
     type: String,

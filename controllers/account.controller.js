@@ -170,6 +170,51 @@ router.get("/users", async (req, res) => {
 
 });
 
+router.post("/sectionupdate", async (req,res) =>{
+
+  // console.log('inside sectionupdate api', req);
+  // var reqUser = new User({
+  //   id: req.body._id,
+  //   lastSection: req.body.lastSection
+  // });
+
+  // console.log('reqUser is -->', reqUser.id);
+  // console.log('req._id is  -->', req.body._id);
+
+  let user = await User.findOne({_id :req.body._id}, function (error, response) {
+    if (error) {
+      // console.log(error);
+      res.send(error);
+    }else if (response) {
+      // console.log('response is -->',response); 
+    }
+  });
+  console.log('let user is -->', user);
+
+  if (!user) {
+    res.status(404).send('No such user found');
+  }else{
+    user.lastSection = req.body.lastSection;
+
+    // const result = await user.save();
+
+    const newUser = await User.findOneAndUpdate({ _id:req.body._id}, {$set: { lastSection: user.lastSection }}, {upsert:true}, function(err, doc){
+      if (err){
+
+         return res.send(500, { error: err });
+      }else{
+        return res.status(200).send("succesfully saved");
+      }
+  });
+  // console.log('success newuser is --> ', newUser);
+
+
+    // console.log('result is -->', result);
+    // res.status(200).send(result);
+
+  }
+});
+
 
 function sendEmail(user) {
   fs.readFile('./utils/passwordTemplate.html', 'utf8',

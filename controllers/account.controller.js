@@ -5,11 +5,6 @@ var { User } = require("../models/user.model");
 var auth = require("../middleware/auth");
 const nodemailer = require("nodemailer");
 var mustache = require("mustache");
-// const template = require("../utils/mailtemplate.html");
-// var nodemailer = require("../utils/nodemailler");
-
-// const upload = require('./upload');
-// const cors = require('cors');
 
 var fs = require("fs");
 const readXlsxFile = require("read-excel-file/node");

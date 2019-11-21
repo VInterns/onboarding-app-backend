@@ -66,7 +66,7 @@ router.post("/bulkRegister", async (req, res) => {
         if (user) {
           user.set({
             fullName: data[i].fullName,
-            email: data[i].email,
+            email: data[i].email.toLowerCase(),
             staffId: data[i].staffId,
             firstName: data[i].firstName,
             lastName: data[i].lastName,
@@ -83,7 +83,7 @@ router.post("/bulkRegister", async (req, res) => {
           if (!userByEmail) {
             var newUser = new User({
               fullName: data[i].fullName,
-              email: data[i].email,
+              email: data[i].email.toLowerCase(),
               staffId: data[i].staffId,
               firstName: data[i].firstName,
               lastName: data[i].lastName,

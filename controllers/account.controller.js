@@ -32,7 +32,7 @@ router.post("/login", async (req, res) => {
       //     "key" )
       // });
       // res.status(200);
-      return res.send( { userid: user._id , status: 200});
+      return res.send( { userId: user._id , status: 200});
     } else {
       console.log('insdie else');
       return res.status(500).send("Invalid NT or Password.");

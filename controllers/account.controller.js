@@ -26,14 +26,14 @@ router.post("/login", async (req, res) => {
     console.log(user);
 
     if (user) {
-      // return res.json({
-      //   token: jwt.sign(
-      //     { email: user.email, _id: user._id },
-      //     "key" )
-      // });
-      // res.status(200);
-      return res.send( { userId: user._id , status: 200});
-    } else {
+      return res.json({
+        token: jwt.sign(
+          { email: user.email, name: user.name, _id: user._id },
+          "key"
+        )
+      });
+    }
+ else {
       console.log('insdie else');
       return res.status(500).send("Invalid NT or Password.");
     }

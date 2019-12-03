@@ -15,4 +15,12 @@ require('./startup/routes.js')(app);
 const port = process.env.PORT || 85;
 app.listen(port);
 
+
+
+var corsOptions = {
+    origin: '*',
+    optionsSuccessStatus: 200,
+  }
+app.use(cors(corsOptions));
+
 app.use(express.static('public'));

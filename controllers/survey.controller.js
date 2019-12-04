@@ -6,7 +6,7 @@ var auth = require("../middleware/auth");
 
 router.post("/addSurvey", async (req, res) => {
 
-    console.log('inside addSuvey api');
+    console.log('inside addSuvey api', req.body);
     var data = req.body;
 
     try {

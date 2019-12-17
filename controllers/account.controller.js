@@ -5,6 +5,7 @@ var { User } = require("../models/user.model");
 var auth = require("../middleware/auth");
 const nodemailer = require("nodemailer");
 var mustache = require("mustache");
+const bcrypt = require("bcrypt");
 
 var fs = require("fs");
 const readXlsxFile = require("read-excel-file/node");
@@ -34,6 +35,7 @@ router.post("/bulkRegister", async (req, res) => {
   try {
     // await fs.writeFileSync("./Public/Excel/Users/newUsers.xlsx", req.file.buffer);
     var errorResult = [];
+    var existingList = [];
     // var rows = await readXlsxFile("./Public/Excel/Users/newUsers.xlsx");
 
     for (var i = 0; i < req.body.Sheet1.length; i++) {
@@ -62,24 +64,17 @@ router.post("/bulkRegister", async (req, res) => {
     } else {
       // console.log('insdie else, data.lenght --> ', data);
       for (var i = 0; i < data.length; i++) {
-        var user = await User.findOne({ email: data[i].email });
+        var user = await User.findOne({ email: data[i].email.toLowerCase() });
+        
         if (user) {
-          user.set({
-            fullName: data[i].fullName,
-            email: data[i].email.toLowerCase(),
-            staffId: data[i].staffId,
-            firstName: data[i].firstName,
-            lastName: data[i].lastName,
-            password: "123",
-            department: data[i].department,
-            company: data[i].company,
-            enggaging: data[i].enggaging,
-            useful: data[i].useful
-          });
-          console.log("existed user before save--> ", user);
-          await user.save();
+          existingList.push(`Row: ${i + 1} ==> ${user.email} already exists`);
+
         } else {
-          var userByEmail = await User.findOne({ email: data[i].email });
+
+          var userByEmail = await User.findOne({
+            email: data[i].email.toLowerCase()
+            
+          });
           if (!userByEmail) {
             var newUser = new User({
               fullName: data[i].fullName,
@@ -94,19 +89,24 @@ router.post("/bulkRegister", async (req, res) => {
               useful: data[i].useful
             });
             console.log("newUser after save--> ", newUser);
-            const result = await newUser.save();
-            console.log("result of save", result);
-            if (result) {
-              console.log("nodemailer to --> ", result.email);
 
-              sendEmail(result);
-            }
-            console.log(result);
-            // await newUser.save();
+            await bcrypt.hash(newUser.password, 10, async function(err, hash) {
+              // Store hash in database
+              let passwordForMail = newUser.password;
+              newUser.password = hash;
+              console.log("hash is --> ", hash);
+              console.log("newUser is --> ", newUser);
+              const result = await newUser.save();
+              if (result) {
+                console.log("nodemailer to --> ", result.email);
+
+                sendEmail(result, passwordForMail);
+              }
+            });
           }
         }
       }
-      return res.send({ message: "Data inserted successfully." });
+      return res.send({ message: "Data inserted successfully.", existingList });
     }
   } catch (error) {}
 });
@@ -115,24 +115,31 @@ router.post("/login", async (req, res) => {
   try {
     console.log("logiiiiiiiin");
     var user = await User.findOne({
-      password: req.body.password,
+      // password: req.body.password,
       email: req.body.email
     });
     console.log(user);
 
     if (user) {
-      return res.json({
-
-        token: jwt.sign({ email: user.email, _id: user._id }, "key")
-        
+      await bcrypt.compare(req.body.password, user.password, function(
+        err,
+        response
+      ) {
+        if (response) {
+          // Passwords match
+          return res.json({
+            token: jwt.sign({ email: user.email, _id: user._id }, "key")
+          });
+        } else {
+          // Passwords don't match
+        }
       });
-    }
- else {
-      console.log('insdie else');
+    } else {
+      console.log("insdie else");
       return res.status(500).send("Invalid NT or Password.");
     }
   } catch (error) {
-    console.log('insdie catch');
+    console.log("insdie catch");
     return res.status(400).send(error.message);
   }
 });
@@ -185,7 +192,8 @@ router.post("/sectionupdate", async (req, res) => {
   }
 });
 
-function sendEmail(user) {
+function sendEmail(user, passwordForMail) {
+  user.password = passwordForMail;
   fs.readFile("./utils/passwordTemplate.html", "utf8", function(
     err,
     mailTemplate

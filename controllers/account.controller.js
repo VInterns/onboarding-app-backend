@@ -5,7 +5,7 @@ var { User } = require("../models/user.model");
 var auth = require("../middleware/auth");
 const nodemailer = require("nodemailer");
 var mustache = require("mustache");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcrypt-nodejs");
 
 var fs = require("fs");
 const readXlsxFile = require("read-excel-file/node");

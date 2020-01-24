@@ -35,6 +35,14 @@ const UserSchema = new Schema({
     type: String,
     required: false
   },
+  role:{
+    type:String,
+    required: false
+  },
+  corporate:{
+    type:String,
+    required: false
+  },
   useful:{
     type:Number,
     required: false

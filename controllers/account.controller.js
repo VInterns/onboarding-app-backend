@@ -128,7 +128,7 @@ router.post("/login", async (req, res) => {
         if (response) {
           // Passwords match
           return res.json({
-            token: jwt.sign({ email: user.email, _id: user._id }, "key")
+            token: jwt.sign({ email: user.email, _id: user._id, role:user.role, corporate:user.corporate }, "key")
           });
         } else {
           // Passwords don't match

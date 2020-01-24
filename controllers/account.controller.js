@@ -65,7 +65,7 @@ router.post("/bulkRegister", async (req, res) => {
       // console.log('insdie else, data.lenght --> ', data);
       for (var i = 0; i < data.length; i++) {
         var user = await User.findOne({ email: data[i].email.toLowerCase() });
-        
+
         if (user) {
           existingList.push(`Row: ${i + 1} ==> ${user.email} already exists`);
 
@@ -73,7 +73,7 @@ router.post("/bulkRegister", async (req, res) => {
 
           var userByEmail = await User.findOne({
             email: data[i].email.toLowerCase()
-            
+
           });
           if (!userByEmail) {
             var newUser = new User({
@@ -90,7 +90,7 @@ router.post("/bulkRegister", async (req, res) => {
             });
             console.log("newUser after save--> ", newUser);
 
-            await bcrypt.hash(newUser.password, 10, async function(err, hash) {
+            await bcrypt.hash(newUser.password, 10, async function (err, hash) {
               // Store hash in database
               let passwordForMail = newUser.password;
               newUser.password = hash;
@@ -108,27 +108,27 @@ router.post("/bulkRegister", async (req, res) => {
       }
       return res.send({ message: "Data inserted successfully.", existingList });
     }
-  } catch (error) {}
+  } catch (error) { }
 });
 
 router.post("/login", async (req, res) => {
   try {
     console.log("logiiiiiiiin");
-    var user = await User.findOne({
+    var dbUser = await User.findOne({
       // password: req.body.password,
       email: req.body.email
     });
-    console.log(user);
+    console.log(dbUser);
 
-    if (user) {
-      await bcrypt.compare(req.body.password, user.password, function(
+    if (dbUser) {
+      await bcrypt.compare(req.body.password, dbUser.password, function (
         err,
         response
       ) {
         if (response) {
           // Passwords match
           return res.json({
-            token: jwt.sign({ email: user.email, _id: user._id }, "key")
+            token: jwt.sign({ email: dbUser.email, _id: dbUser._id }, "key")
           });
         } else {
           // Passwords don't match
@@ -149,7 +149,7 @@ router.get("/authData", auth, async (req, res) => {
 });
 
 router.get("/users", async (req, res) => {
-  let users = await User.find(function(error, response) {
+  let users = await User.find(function (error, response) {
     if (error) {
       res.send(error);
     } else {
@@ -160,7 +160,7 @@ router.get("/users", async (req, res) => {
 });
 
 router.post("/sectionupdate", async (req, res) => {
-  let user = await User.findOne({ _id: req.body._id }, function(
+  let user = await User.findOne({ _id: req.body._id }, function (
     error,
     response
   ) {
@@ -181,7 +181,7 @@ router.post("/sectionupdate", async (req, res) => {
       { _id: req.body._id },
       { $set: { lastSection: user.lastSection } },
       { upsert: true },
-      function(err, doc) {
+      function (err, doc) {
         if (err) {
           return res.send(500, { error: err });
         } else {
@@ -194,7 +194,7 @@ router.post("/sectionupdate", async (req, res) => {
 
 function sendEmail(user, passwordForMail) {
   user.password = passwordForMail;
-  fs.readFile("./utils/passwordTemplate.html", "utf8", function(
+  fs.readFile("./utils/passwordTemplate.html", "utf8", function (
     err,
     mailTemplate
   ) {
@@ -222,7 +222,7 @@ function sendEmail(user, passwordForMail) {
       html: actualMail
     };
 
-    transporter.sendMail(mailOptions, function(error, info) {
+    transporter.sendMail(mailOptions, function (error, info) {
       if (error) {
         throw error;
       } else {

@@ -2,6 +2,7 @@ const express = require('express');
 const { mongoose } = require('./startup/db.js');
 const app = express();
 const bodyParser = require('body-parser');
+require('dotenv').config();
 
 app.use(bodyParser.json());
 
@@ -13,6 +14,7 @@ app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();
 });
+
 require('./startup/routes.js')(app);
 
 const port = process.env.PORT || 85;

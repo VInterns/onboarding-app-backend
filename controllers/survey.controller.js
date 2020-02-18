@@ -19,7 +19,7 @@ router.post("/addSurvey", async (req, res) => {
         user.comment = data.comment;
 
         const result = await user.save();
-        if(result){
+        if (result) {
             res.status(200).send("Survey Added Successfully");
         }
     } catch (error) {
@@ -31,5 +31,5 @@ router.post("/addSurvey", async (req, res) => {
 
 
 
-module.exports = router;    
+module.exports = router;
 

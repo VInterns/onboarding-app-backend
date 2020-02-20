@@ -121,7 +121,8 @@ router.post("/login", async (req, res) => {
     console.log(dbUser);
 
     if (dbUser) {
-      await bcrypt.compare(req.body.password, dbUser.password, function (
+      console.log('bcrypt')
+      bcrypt.compare(req.body.password, dbUser.password, function (
         err,
         response
       ) {
@@ -131,16 +132,18 @@ router.post("/login", async (req, res) => {
             token: jwt.sign({ email: dbUser.email, _id: dbUser._id }, "key")
           });
         } else {
+          console.log(`password don't match`);
+          return res.status(401).send("Invalid NT or Password.");
           // Passwords don't match
         }
       });
     } else {
       console.log("insdie else");
-      return res.status(500).send("Invalid NT or Password.");
+      return res.status(401).send("Invalid NT or Password.");
     }
   } catch (error) {
     console.log("insdie catch");
-    return res.status(400).send(error.message);
+    return res.status(500).send(error.message);
   }
 });
 

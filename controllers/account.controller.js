@@ -114,9 +114,10 @@ router.post("/bulkRegister", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     console.log("logiiiiiiiin");
+    userEmail = req.body.email.toLowerCase();
     var dbUser = await User.findOne({
       // password: req.body.password,
-      email: req.body.email
+      email: userEmail
     });
     console.log(dbUser);
 

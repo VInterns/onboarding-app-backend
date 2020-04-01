@@ -24,18 +24,16 @@ router.post("/register", async (req, res) => {
   }
 });
 
+
 router.post("/bulkRegister", async (req, res) => {
-  console.log(
-    "some on called bulkRegister api",
-    req.body.Sheet1,
-    req.body.Sheet1.length
-  );
+
   let data = req.body.Sheet1;
   // console.log('data is --> ', data);
   try {
     // await fs.writeFileSync("./Public/Excel/Users/newUsers.xlsx", req.file.buffer);
     var errorResult = [];
     var existingList = [];
+    var userToAdd = [];
     // var rows = await readXlsxFile("./Public/Excel/Users/newUsers.xlsx");
 
     for (var i = 0; i < req.body.Sheet1.length; i++) {
@@ -51,7 +49,7 @@ router.post("/bulkRegister", async (req, res) => {
         enggaging: req.body.Sheet1[i].enggaging,
         useful: req.body.Sheet1[i].useful
       };
-      console.log("uploadUser --> ", uploadUser);
+      // console.log("uploadUser --> ", uploadUser);
     }
     // const result = Joi.validate(uploadUser, UserValidation);
     // if (result.error) {
@@ -63,42 +61,48 @@ router.post("/bulkRegister", async (req, res) => {
       return res.status(400).send(errorResult);
     } else {
       // console.log('insdie else, data.lenght --> ', data);
-      for (var i = 0; i < data.length; i++) {
-        var user = await User.findOne({ email: data[i].email.toLowerCase() });
-
+      // for (var i = 0; i < data.length; i++) {
+      for (const i of data) {
+        console.log('for loop i is --> ', i);
+        var user = await User.findOne({ email: i.email.toLowerCase() });
+        console.log('user found --> ', user);
         if (user) {
           existingList.push(`Row: ${i + 1} ==> ${user.email} already exists`);
 
         } else {
 
           var userByEmail = await User.findOne({
-            email: data[i].email.toLowerCase()
-
+            email: i.email.toLowerCase()
+            
           });
           if (!userByEmail) {
-            var newUser = new User({
-              fullName: data[i].fullName,
-              email: data[i].email.toLowerCase(),
-              staffId: data[i].staffId,
-              firstName: data[i].firstName,
-              lastName: data[i].lastName,
-              department: data[i].department,
+            let newUser={};
+            console.log("empty obk]jecg " , newUser);
+             newUser = new User({
+              fullName: i.fullName,
+              email: i.email.toLowerCase(),
+              staffId: i.staffId,
+              firstName: i.firstName,
+              lastName: i.lastName,
+              department: i.department,
               password: "123",
-              company: data[i].company,
-              enggaging: data[i].enggaging,
-              useful: data[i].useful
+              company: i.company,
+              enggaging: i.enggaging,
+              useful: i.useful
             });
-            console.log("newUser after save--> ", newUser);
+            console.log("user before save--> ", newUser);
 
-            await bcrypt.hash(newUser.password, 10, async function (err, hash) {
+            await bcrypt.hash(newUser.password, 10, async function(err, hash) {
               // Store hash in database
               let passwordForMail = newUser.password;
               newUser.password = hash;
-              console.log("hash is --> ", hash);
+              // console.log("hash is --> ", hash);
               console.log("newUser is --> ", newUser);
               const result = await newUser.save();
               if (result) {
-                console.log("nodemailer to --> ", result.email);
+              console.log('result saved user --> ', result);
+
+                // console.log("nodemailer to --> ", result.email);
 
                 sendEmail(result, passwordForMail);
               }
@@ -108,8 +112,97 @@ router.post("/bulkRegister", async (req, res) => {
       }
       return res.send({ message: "Data inserted successfully.", existingList });
     }
-  } catch (error) { }
+  } catch (error) {}
 });
+
+
+////// OLDDDD 
+// router.post("/bulkRegister", async (req, res) => {
+//   console.log(
+//     "some on called bulkRegister api",
+//     req.body.Sheet1,
+//     req.body.Sheet1.length
+//   );
+//   let data = req.body.Sheet1;
+//   // console.log('data is --> ', data);
+//   try {
+//     // await fs.writeFileSync("./Public/Excel/Users/newUsers.xlsx", req.file.buffer);
+//     var errorResult = [];
+//     var existingList = [];
+//     // var rows = await readXlsxFile("./Public/Excel/Users/newUsers.xlsx");
+
+//     for (var i = 0; i < req.body.Sheet1.length; i++) {
+//       // console.log('inside for loop',req.body.Sheet1[i].userName);
+//       var uploadUser = {
+//         fullName: req.body.Sheet1[i].fullName,
+//         email: req.body.Sheet1[i].email,
+//         staffId: req.body.Sheet1[i].staffId,
+//         firstName: req.body.Sheet1[i].firstName,
+//         lastName: req.body.Sheet1[i].lastName,
+//         department: req.body.Sheet1[i].department,
+//         company: req.body.Sheet1[i].company,
+//         enggaging: req.body.Sheet1[i].enggaging,
+//         useful: req.body.Sheet1[i].useful
+//       };
+//       console.log("uploadUser --> ", uploadUser);
+//     }
+//     // const result = Joi.validate(uploadUser, UserValidation);
+//     // if (result.error) {
+//     //   // errorResult.push(`Row: ${i + 1} ==> ${result.error.details[0].message}`);
+//     // }
+
+//     if (errorResult.length > 0) {
+//       // console.log('errorResult --> ', errorResult);
+//       return res.status(400).send(errorResult);
+//     } else {
+//       // console.log('insdie else, data.lenght --> ', data);
+//       for (var i = 0; i < data.length; i++) {
+//         var user = await User.findOne({ email: data[i].email.toLowerCase() });
+
+//         if (user) {
+//           existingList.push(`Row: ${i + 1} ==> ${user.email} already exists`);
+
+//         } else {
+
+//           var userByEmail = await User.findOne({
+//             email: data[i].email.toLowerCase()
+
+//           });
+//           if (!userByEmail) {
+//             var newUser = new User({
+//               fullName: data[i].fullName,
+//               email: data[i].email.toLowerCase(),
+//               staffId: data[i].staffId,
+//               firstName: data[i].firstName,
+//               lastName: data[i].lastName,
+//               department: data[i].department,
+//               password: "123",
+//               company: data[i].company,
+//               enggaging: data[i].enggaging,
+//               useful: data[i].useful
+//             });
+//             console.log("newUser after save--> ", newUser);
+
+//             await bcrypt.hash(newUser.password, 10, async function (err, hash) {
+//               // Store hash in database
+//               let passwordForMail = newUser.password;
+//               newUser.password = hash;
+//               console.log("hash is --> ", hash);
+//               console.log("newUser is --> ", newUser);
+//               const result = await newUser.save();
+//               if (result) {
+//                 console.log("nodemailer to --> ", result.email);
+
+//                 sendEmail(result, passwordForMail);
+//               }
+//             });
+//           }
+//         }
+//       }
+//       return res.send({ message: "Data inserted successfully.", existingList });
+//     }
+//   } catch (error) { }
+// });
 
 router.post("/login", async (req, res) => {
   try {

@@ -5,7 +5,7 @@ var { User } = require("../models/user.model");
 var auth = require("../middleware/auth");
 const nodemailer = require("nodemailer");
 var mustache = require("mustache");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 var fs = require("fs");
 const readXlsxFile = require("read-excel-file/node");
@@ -73,12 +73,12 @@ router.post("/bulkRegister", async (req, res) => {
 
           var userByEmail = await User.findOne({
             email: i.email.toLowerCase()
-            
+
           });
           if (!userByEmail) {
-            let newUser={};
-            console.log("empty obk]jecg " , newUser);
-             newUser = new User({
+            let newUser = {};
+            console.log("empty obk]jecg ", newUser);
+            newUser = new User({
               fullName: i.fullName,
               email: i.email.toLowerCase(),
               staffId: i.staffId,
@@ -92,7 +92,7 @@ router.post("/bulkRegister", async (req, res) => {
             });
             // console.log("user before save--> ", newUser);
 
-            await bcrypt.hash(newUser.password, 10, async function(err, hash) {
+            await bcrypt.hash(newUser.password, 10, async function (err, hash) {
               // Store hash in database
               // console.log('inside hash function', err);
               let passwordForMail = newUser.password;
@@ -101,7 +101,7 @@ router.post("/bulkRegister", async (req, res) => {
               // console.log("newUser is --> ", newUser);
               const result = await newUser.save();
               if (result) {
-              // console.log('result saved user --> ', result);
+                // console.log('result saved user --> ', result);
 
                 // console.log("nodemailer to --> ", result.email);
 
@@ -113,7 +113,7 @@ router.post("/bulkRegister", async (req, res) => {
       }
       return res.send({ message: "Data inserted successfully.", existingList });
     }
-  } catch (error) {}
+  } catch (error) { }
 });
 
 

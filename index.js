@@ -3,6 +3,7 @@ const { mongoose } = require('./startup/db.js');
 const app = express();
 const bodyParser = require('body-parser');
 require('dotenv').config();
+const path = require("path");
 
 app.use(bodyParser.json());
 
@@ -30,3 +31,11 @@ var corsOptions = {
 app.use(cors(corsOptions));
 
 app.use(express.static('public'));
+
+app.get("*", (req, res, next) => {
+
+  if (req.url.startsWith('/api')) {
+    return next();
+  }
+  res.sendFile(path.join(__dirname, "public/index.html"));
+});

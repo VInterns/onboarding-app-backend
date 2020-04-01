@@ -1,0 +1,9 @@
+applications:
+  - name: v-buddy
+    buildpacks:
+        - nodejs_buildpack
+    command: yarn start
+    env:
+      NODE_ENV: production
+    services:
+      - v-buddy-db

@@ -47,7 +47,8 @@ router.post("/bulkRegister", async (req, res) => {
         department: req.body.Sheet1[i].department,
         company: req.body.Sheet1[i].company,
         enggaging: req.body.Sheet1[i].enggaging,
-        useful: req.body.Sheet1[i].useful
+        useful: req.body.Sheet1[i].useful,
+        isAdmin: req.body.Sheet1[i].isAdmin
       };
       // console.log("uploadUser --> ", uploadUser);
     }
@@ -88,7 +89,8 @@ router.post("/bulkRegister", async (req, res) => {
               password: "123",
               company: i.company,
               enggaging: i.enggaging,
-              useful: i.useful
+              useful: i.useful,
+              isAdmin: i.isAdmin
             });
             // console.log("user before save--> ", newUser);
 
@@ -124,6 +126,45 @@ router.post("/login", async (req, res) => {
     var dbUser = await User.findOne({
       // password: req.body.password,
       email: userEmail
+    });
+    console.log(dbUser);
+
+    if (dbUser) {
+      console.log('bcrypt')
+      bcrypt.compare(req.body.password, dbUser.password, function (
+        err,
+        response
+      ) {
+        if (response) {
+          // Passwords match
+          return res.json({
+            token: jwt.sign({ email: dbUser.email, _id: dbUser._id }, "key")
+          });
+        } else {
+          console.log(`password don't match`);
+          return res.status(401).send("Invalid NT or Password.");
+          // Passwords don't match
+        }
+      });
+    } else {
+      console.log("insdie else");
+      return res.status(401).send("Invalid NT or Password.");
+    }
+  } catch (error) {
+    console.log("insdie catch");
+    return res.status(500).send(error.message);
+  }
+});
+
+
+router.post("/login/admin", async (req, res) => {
+  try {
+    console.log("logiiiiiiiin");
+    userEmail = req.body.email.toLowerCase();
+    var dbUser = await User.findOne({
+      // password: req.body.password,
+      email: userEmail,
+      isAdmin: true
     });
     console.log(dbUser);
 

@@ -121,7 +121,7 @@ router.post("/bulkRegister", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   try {
-    console.log("logiiiiiiiin");
+    // console.log("logiiiiiiiin");
     userEmail = req.body.email.toLowerCase();
     var dbUser = await User.findOne({
       // password: req.body.password,
@@ -130,7 +130,7 @@ router.post("/login", async (req, res) => {
     console.log(dbUser);
 
     if (dbUser) {
-      console.log('bcrypt')
+      // console.log('bcrypt')
       bcrypt.compare(req.body.password, dbUser.password, function (
         err,
         response
@@ -141,13 +141,13 @@ router.post("/login", async (req, res) => {
             token: jwt.sign({ email: dbUser.email, _id: dbUser._id }, "key")
           });
         } else {
-          console.log(`password don't match`);
+          // console.log(`password don't match`);
           return res.status(401).send("Invalid NT or Password.");
           // Passwords don't match
         }
       });
     } else {
-      console.log("insdie else");
+      // console.log("insdie else");
       return res.status(401).send("Invalid NT or Password.");
     }
   } catch (error) {
@@ -159,7 +159,7 @@ router.post("/login", async (req, res) => {
 
 router.post("/login/admin", async (req, res) => {
   try {
-    console.log("logiiiiiiiin");
+    // console.log("logiiiiiiiin");
     userEmail = req.body.email.toLowerCase();
     var dbUser = await User.findOne({
       // password: req.body.password,
@@ -169,7 +169,7 @@ router.post("/login/admin", async (req, res) => {
     console.log(dbUser);
 
     if (dbUser) {
-      console.log('bcrypt')
+      // console.log('bcrypt')
       bcrypt.compare(req.body.password, dbUser.password, function (
         err,
         response
@@ -180,17 +180,17 @@ router.post("/login/admin", async (req, res) => {
             token: jwt.sign({ email: dbUser.email, _id: dbUser._id }, "key", {expiresIn: 900})
           });
         } else {
-          console.log(`password don't match`);
+          // console.log(`password don't match`);
           return res.status(401).send("Invalid NT or Password.");
           // Passwords don't match
         }
       });
     } else {
-      console.log("insdie else");
+      // console.log("insdie else");
       return res.status(401).send("Invalid NT or Password.");
     }
   } catch (error) {
-    console.log("insdie catch");
+    // console.log("insdie catch");
     return res.status(500).send(error.message);
   }
 });

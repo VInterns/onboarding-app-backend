@@ -6,6 +6,7 @@ var auth = require("../middleware/auth");
 const nodemailer = require("nodemailer");
 var mustache = require("mustache");
 const bcrypt = require("bcryptjs");
+const mailSender = require("../Services/mail").sendEmail;
 
 var fs = require("fs");
 const readXlsxFile = require("read-excel-file/node");
@@ -254,18 +255,6 @@ function sendEmail(user, passwordForMail) {
     // TODO: make the mail template ready
     let actualMail = mustache.render(mailTemplate, user);
 
-    let transporter = nodemailer.createTransport({
-      service: "gmail",
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      requireTLS: true,
-      auth: {
-        user: "vodafoneonboarding@gmail.com",
-        pass: "Vodafone@1234"
-      }
-    });
-
     let mailOptions = {
       from: "vodafoneonboarding@gmail.com",
       to: user.email,
@@ -273,13 +262,11 @@ function sendEmail(user, passwordForMail) {
       html: actualMail
     };
 
-    transporter.sendMail(mailOptions, function (error, info) {
-      if (error) {
-        throw error;
-      } else {
-        console.log("Email sent: " + info.response);
-      }
-    });
+    mailSender(user.email,"Welcome " + user.fullName + " to Vodafone",actualMail,() =>{
+     console.log('mail sent', user.email);
+    }, (error)=>{
+      console.log(error);
+    })
   });
 }
 

@@ -177,7 +177,7 @@ router.post("/login/admin", async (req, res) => {
         if (response) {
           // Passwords match
           return res.json({
-            token: jwt.sign({ email: dbUser.email, _id: dbUser._id }, "key")
+            token: jwt.sign({ email: dbUser.email, _id: dbUser._id }, "key", {expiresIn: 900})
           });
         } else {
           console.log(`password don't match`);

@@ -2,8 +2,9 @@ applications:
   - name: v-buddy
     buildpacks:
         - nodejs_buildpack
-    command: yarn start
+    command: npm start
     env:
       NODE_ENV: production
     services:
       - v-buddy-db
+      - v-buddy-mail

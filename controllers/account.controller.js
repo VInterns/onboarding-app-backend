@@ -13,15 +13,35 @@ var multer = require("multer");
 var upload = multer({ storage: multer.memoryStorage() });
 
 router.post("/register", async (req, res) => {
+  const Joi = require('joi');
   var data = req.body;
-  try {
-    var segCreate = await User.create(data);
-    console.log(segCreate);
+  const schema = Joi.object().keys({
+    email: Joi.string().email().required(),
+    password: Joi.string().required()
+  });
+  Joi.validate(data, schema, (err, value) => {
+    if (err) {
+      res.status(422).json({
+        status: 'error',
+        message: 'Invalid request data',
+        data: data
+      });
+    } else {
+      res.json({
+        status: 'success',
+        message: 'User created successfully'
+      });
+    }
+  });
 
-    return res.send("User added Successfully");
-  } catch (error) {
-    return res.status(400).send(error.message);
-  }
+  // try {
+  //   var segCreate = await User.create(data);
+  //   console.log(segCreate);
+
+  //   return res.send("User added Successfully");
+  // } catch (error) {
+  //   return res.status(400).send(error.message);
+  // }
 });
 
 
@@ -77,7 +97,7 @@ router.post("/bulkRegister", async (req, res) => {
           });
           if (!userByEmail) {
             let newUser = {};
-            console.log("empty obk]jecg ", newUser);
+            console.log("empty object ", newUser);
             newUser = new User({
               fullName: i.fullName,
               email: i.email.toLowerCase(),
@@ -90,28 +110,65 @@ router.post("/bulkRegister", async (req, res) => {
               enggaging: i.enggaging,
               useful: i.useful
             });
-            // console.log("user before save--> ", newUser);
-
             await bcrypt.hash(newUser.password, 10, async function (err, hash) {
               // Store hash in database
               // console.log('inside hash function', err);
               let passwordForMail = newUser.password;
               newUser.password = hash;
-              // console.log("hash is --> ", hash);
-              // console.log("newUser is --> ", newUser);
-              const result = await newUser.save();
-              if (result) {
-                // console.log('result saved user --> ', result);
+            });
 
-                // console.log("nodemailer to --> ", result.email);
-
+            const schema = Joi.object().keys({
+              email: Joi.string().email().required(),
+              password: Joi.string().required(),
+              fullName: Joi.any(),
+              staffId: Joi.any(),
+              firstName: Joi.any(),
+              lastName: Joi.any(),
+              department: Joi.any(),
+              password: Joi.any(),
+              company: Joi.any(),
+              enggaging: Joi.any(),
+              useful: Joi.any()
+            });
+            Joi.validate(newUser, schema, (err, value) => {
+              if (err) {
+                res.status(422).json({
+                  status: 'error',
+                  message: 'Invalid request data',
+                  data: data
+                });
+              } else {
                 sendEmail(result, passwordForMail);
+
+                res.json({
+                  status: 'success',
+                  message: 'User created successfully'
+                });
               }
             });
+
+            // console.log("user before save--> ", newUser);
+
+            // await bcrypt.hash(newUser.password, 10, async function (err, hash) {
+            //   // Store hash in database
+            //   // console.log('inside hash function', err);
+            //   let passwordForMail = newUser.password;
+            //   newUser.password = hash;
+            //   // console.log("hash is --> ", hash);
+            //   // console.log("newUser is --> ", newUser);
+            //   const result = await newUser.save();
+            //   if (result) {
+            //     // console.log('result saved user --> ', result);
+
+            //     // console.log("nodemailer to --> ", result.email);
+
+            //     sendEmail(result, passwordForMail);
+            //   }
+            // });
           }
         }
       }
-      return res.send({ message: "Data inserted successfully.", existingList });
+      // return res.send({ message: "Data inserted successfully.", existingList });
     }
   } catch (error) { }
 });

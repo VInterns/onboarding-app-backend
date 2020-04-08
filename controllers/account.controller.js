@@ -29,94 +29,71 @@ router.post("/register", async (req, res) => {
 router.post("/bulkRegister", async (req, res) => {
 
   let data = req.body.Sheet1;
-  // console.log('data is --> ', data);
-  try {
-    // await fs.writeFileSync("./Public/Excel/Users/newUsers.xlsx", req.file.buffer);
-    var errorResult = [];
-    var existingList = [];
-    var userToAdd = [];
-    // var rows = await readXlsxFile("./Public/Excel/Users/newUsers.xlsx");
+  var errorResult = [];
+  var existingList = [];
+  var userToAdd = [];
 
-    for (var i = 0; i < req.body.Sheet1.length; i++) {
-      // console.log('inside for loop',req.body.Sheet1[i].userName);
-      var uploadUser = {
-        fullName: req.body.Sheet1[i].fullName,
-        email: req.body.Sheet1[i].email,
-        staffId: req.body.Sheet1[i].staffId,
-        firstName: req.body.Sheet1[i].firstName,
-        lastName: req.body.Sheet1[i].lastName,
-        department: req.body.Sheet1[i].department,
-        company: req.body.Sheet1[i].company,
-        enggaging: req.body.Sheet1[i].enggaging,
-        useful: req.body.Sheet1[i].useful,
-        isAdmin: req.body.Sheet1[i].isAdmin
-      };
-      // console.log("uploadUser --> ", uploadUser);
-    }
-    // const result = Joi.validate(uploadUser, UserValidation);
-    // if (result.error) {
-    //   // errorResult.push(`Row: ${i + 1} ==> ${result.error.details[0].message}`);
-    // }
+  for (var i = 0; i < req.body.Sheet1.length; i++) {
+    var uploadUser = {
+      fullName: req.body.Sheet1[i].fullName,
+      email: req.body.Sheet1[i].email,
+      staffId: req.body.Sheet1[i].staffId,
+      firstName: req.body.Sheet1[i].firstName,
+      lastName: req.body.Sheet1[i].lastName,
+      department: req.body.Sheet1[i].department,
+      company: req.body.Sheet1[i].company,
+      enggaging: req.body.Sheet1[i].enggaging,
+      useful: req.body.Sheet1[i].useful,
+      isAdmin: req.body.Sheet1[i].isAdmin
+    };
+  }
 
-    if (errorResult.length > 0) {
-      // console.log('errorResult --> ', errorResult);
-      return res.status(400).send(errorResult);
-    } else {
-      // console.log('insdie else, data.lenght --> ', data);
-      // for (var i = 0; i < data.length; i++) {
-      for (const i of data) {
-        console.log('for loop i is --> ', i);
-        var user = await User.findOne({ email: i.email.toLowerCase() });
-        console.log('user found --> ', user);
-        if (user) {
-          existingList.push(`Row: ${i + 1} ==> ${user.email} already exists`);
+  if (errorResult.length > 0) {
+    return res.status(400).send(errorResult);
+  } else {
+    for (const i of data) {
+      console.log('for loop i is --> ', i);
+      var user = await User.findOne({ email: i.email.toLowerCase() });
+      console.log('user found --> ', user);
+      if (user) {
+        existingList.push(`Row: ${i + 1} ==> ${user.email} already exists`);
 
-        } else {
+      } else {
 
-          var userByEmail = await User.findOne({
-            email: i.email.toLowerCase()
+        var userByEmail = await User.findOne({
+          email: i.email.toLowerCase()
 
+        });
+        if (!userByEmail) {
+          let newUser = {};
+          console.log("empty obk]jecg ", newUser);
+          newUser = new User({
+            fullName: i.fullName,
+            email: i.email.toLowerCase(),
+            staffId: i.staffId,
+            firstName: i.firstName,
+            lastName: i.lastName,
+            department: i.department,
+            password: "123",
+            company: i.company,
+            enggaging: i.enggaging,
+            useful: i.useful,
+            isAdmin: i.isAdmin
           });
-          if (!userByEmail) {
-            let newUser = {};
-            console.log("empty obk]jecg ", newUser);
-            newUser = new User({
-              fullName: i.fullName,
-              email: i.email.toLowerCase(),
-              staffId: i.staffId,
-              firstName: i.firstName,
-              lastName: i.lastName,
-              department: i.department,
-              password: "123",
-              company: i.company,
-              enggaging: i.enggaging,
-              useful: i.useful,
-              isAdmin: i.isAdmin
-            });
-            // console.log("user before save--> ", newUser);
 
-            await bcrypt.hash(newUser.password, 10, async function (err, hash) {
-              // Store hash in database
-              // console.log('inside hash function', err);
-              let passwordForMail = newUser.password;
-              newUser.password = hash;
-              // console.log("hash is --> ", hash);
-              // console.log("newUser is --> ", newUser);
-              const result = await newUser.save();
-              if (result) {
-                // console.log('result saved user --> ', result);
-
-                // console.log("nodemailer to --> ", result.email);
-
-                sendEmail(result, passwordForMail);
-              }
-            });
-          }
+          await bcrypt.hash(newUser.password, 10, async function (err, hash) {
+            let passwordForMail = newUser.password;
+            newUser.password = hash;
+            const result = await newUser.save();
+            if (result) {
+              sendEmail(result, passwordForMail);
+            }
+          });
         }
       }
-      return res.send({ message: "Data inserted successfully.", existingList });
     }
-  } catch (error) { }
+    return res.send({ message: "Data inserted successfully.", existingList });
+  }
 });
 
 
@@ -178,7 +155,7 @@ router.post("/login/admin", async (req, res) => {
         if (response) {
           // Passwords match
           return res.json({
-            token: jwt.sign({ email: dbUser.email, _id: dbUser._id }, "key", {expiresIn: 900})
+            token: jwt.sign({ email: dbUser.email, _id: dbUser._id }, "key", { expiresIn: 900 })
           });
         } else {
           // console.log(`password don't match`);
@@ -255,16 +232,9 @@ function sendEmail(user, passwordForMail) {
     // TODO: make the mail template ready
     let actualMail = mustache.render(mailTemplate, user);
 
-    let mailOptions = {
-      from: "vodafoneonboarding@gmail.com",
-      to: user.email,
-      subject: "Welcome " + user.fullName + " to Vodafone",
-      html: actualMail
-    };
-
-    mailSender(user.email,"Welcome " + user.fullName + " to Vodafone",actualMail,() =>{
-     console.log('mail sent', user.email);
-    }, (error)=>{
+    mailSender(user.email, "Welcome " + user.fullName + " to Vodafone", actualMail, () => {
+      console.log('mail sent', user.email);
+    }, (error) => {
       console.log(error);
     })
   });

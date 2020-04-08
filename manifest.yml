@@ -7,4 +7,4 @@ applications:
       NODE_ENV: production
     services:
       - v-buddy-db
-      - v-buddy-mail
+      - leaver-send

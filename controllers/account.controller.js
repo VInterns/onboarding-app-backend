@@ -12,46 +12,15 @@ var fs = require("fs");
 const readXlsxFile = require("read-excel-file/node");
 var multer = require("multer");
 var upload = multer({ storage: multer.memoryStorage() });
-
-router.post("/register", async (req, res) => {
-  const Joi = require('joi');
-  var data = req.body;
-  const schema = Joi.object().keys({
-    email: Joi.string().email().required(),
-    password: Joi.string().required()
-  });
-  Joi.validate(data, schema, (err, value) => {
-    if (err) {
-      res.status(422).json({
-        status: 'error',
-        message: 'Invalid request data',
-        data: data
-      });
-    } else {
-      res.json({
-        status: 'success',
-        message: 'User created successfully'
-      });
-    }
-  });
-
-  // try {
-  //   var segCreate = await User.create(data);
-  //   console.log(segCreate);
-
-  //   return res.send("User added Successfully");
-  // } catch (error) {
-  //   return res.status(400).send(error.message);
-  // }
-});
-
+const Joi = require('joi');
+const registerSchema = require("../joi_validations/registerSchema");
 
 router.post("/bulkRegister", async (req, res) => {
 
   let data = req.body.Sheet1;
   var errorResult = [];
   var existingList = [];
-  var userToAdd = [];
+  var notValidList = [];
 
   for (var i = 0; i < req.body.Sheet1.length; i++) {
     var uploadUser = {
@@ -125,74 +94,38 @@ router.post("/bulkRegister", async (req, res) => {
               useful: i.useful
             });
             await bcrypt.hash(newUser.password, 10, async function (err, hash) {
-              // Store hash in database
-              // console.log('inside hash function', err);
               let passwordForMail = newUser.password;
               newUser.password = hash;
             });
 
-            const schema = Joi.object().keys({
-              email: Joi.string().email().required(),
-              password: Joi.string().required(),
-              fullName: Joi.any(),
-              staffId: Joi.any(),
-              firstName: Joi.any(),
-              lastName: Joi.any(),
-              department: Joi.any(),
-              password: Joi.any(),
-              company: Joi.any(),
-              enggaging: Joi.any(),
-              useful: Joi.any()
-            });
-            Joi.validate(newUser, schema, (err, value) => {
+            Joi.validate(newUser, registerSchema, (err, value) => {
               if (err) {
-                res.status(422).json({
-                  status: 'error',
-                  message: 'Invalid request data',
-                  data: data
-                });
-              } else {
-                sendEmail(result, passwordForMail);
 
-                res.json({
-                  status: 'success',
-                  message: 'User created successfully'
-                });
+                notValidList.push(`Row: ${i + 1} ==> ${newUser.email} this user is not valid`);
+
+                // res.status(422).json({
+                //   status: 'error',
+                //   message: 'Invalid request data',
+                //   data: data
+                // });
+              } else {
+
+                newUser.save();
+                sendEmail(result, passwordForMail);
               }
             });
 
-            // console.log("user before save--> ", newUser);
-
-            // await bcrypt.hash(newUser.password, 10, async function (err, hash) {
-            //   // Store hash in database
-            //   // console.log('inside hash function', err);
-            //   let passwordForMail = newUser.password;
-            //   newUser.password = hash;
-            //   // console.log("hash is --> ", hash);
-            //   // console.log("newUser is --> ", newUser);
-            //   const result = await newUser.save();
-            //   if (result) {
-            //     // console.log('result saved user --> ', result);
-
-            //     // console.log("nodemailer to --> ", result.email);
-
-            //     sendEmail(result, passwordForMail);
-            //   }
-            // });
           }
         }
       }
-      // return res.send({ message: "Data inserted successfully.", existingList });
-
     }
-    return res.send({ message: "Data inserted successfully.", existingList });
+    return res.send({ message: "Data inserted successfully.", existingList, notValidList });
   }
 });
 
 
 router.post("/login", async (req, res) => {
   try {
-    // console.log("logiiiiiiiin");
     userEmail = req.body.email.toLowerCase();
     var dbUser = await User.findOne({
       // password: req.body.password,
@@ -201,7 +134,6 @@ router.post("/login", async (req, res) => {
     console.log(dbUser);
 
     if (dbUser) {
-      // console.log('bcrypt')
       bcrypt.compare(req.body.password, dbUser.password, function (
         err,
         response
@@ -212,13 +144,10 @@ router.post("/login", async (req, res) => {
             token: jwt.sign({ email: dbUser.email, _id: dbUser._id }, "key")
           });
         } else {
-          // console.log(`password don't match`);
           return res.status(401).send("Invalid NT or Password.");
-          // Passwords don't match
         }
       });
     } else {
-      // console.log("insdie else");
       return res.status(401).send("Invalid NT or Password.");
     }
   } catch (error) {

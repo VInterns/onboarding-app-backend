@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const UserSchema = new Schema({
   fullName: {
     type: String,
-    required: true
+    required: false
   },
   email: {
     type: String,
@@ -19,36 +19,36 @@ const UserSchema = new Schema({
     type: String,
     required: false
   },
-  firstName:{
+  firstName: {
     type: String,
     required: false
   },
-  lastName:{
+  lastName: {
     type: String,
     required: false
   },
-  isAdmin:{
+  isAdmin: {
     type: Boolean,
     required: true
   },
-  department:{
+  department: {
     type: String,
     required: false
   },
-  lastSection:{
+  lastSection: {
     type: String,
     required: false
   },
-  useful:{
-    type:Number,
-    required: false
-  },
-  enggaging:{
+  useful: {
     type: Number,
     required: false
   },
-  comment:{
-    type:String,
+  enggaging: {
+    type: Number,
+    required: false
+  },
+  comment: {
+    type: String,
     required: false
   }
 });

@@ -7,6 +7,7 @@ const nodemailer = require("nodemailer");
 var mustache = require("mustache");
 const bcrypt = require("bcryptjs");
 const mailSender = require("../Services/mail").sendEmail;
+var generator = require("generate-password");
 
 var fs = require("fs");
 const readXlsxFile = require("read-excel-file/node");
@@ -25,9 +26,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-
 router.post("/bulkRegister", async (req, res) => {
-
   let data = req.body.Sheet1;
   var errorResult = [];
   var existingList = [];
@@ -52,17 +51,14 @@ router.post("/bulkRegister", async (req, res) => {
     return res.status(400).send(errorResult);
   } else {
     for (const i of data) {
-      console.log('for loop i is --> ', i);
+      console.log("for loop i is --> ", i);
       var user = await User.findOne({ email: i.email.toLowerCase() });
-      console.log('user found --> ', user);
+      console.log("user found --> ", user);
       if (user) {
         existingList.push(`Row: ${i + 1} ==> ${user.email} already exists`);
-
       } else {
-
         var userByEmail = await User.findOne({
           email: i.email.toLowerCase()
-
         });
         if (!userByEmail) {
           let newUser = {};
@@ -74,14 +70,18 @@ router.post("/bulkRegister", async (req, res) => {
             firstName: i.firstName,
             lastName: i.lastName,
             department: i.department,
-            password: "123",
+            password: generator.generate({
+              length: 5,
+              numbers: false,
+              uppercase :false,
+            }),
             company: i.company,
             enggaging: i.enggaging,
             useful: i.useful,
             isAdmin: i.isAdmin
           });
 
-          await bcrypt.hash(newUser.password, 10, async function (err, hash) {
+          await bcrypt.hash(newUser.password, 10, async function(err, hash) {
             let passwordForMail = newUser.password;
             newUser.password = hash;
             const result = await newUser.save();
@@ -96,7 +96,6 @@ router.post("/bulkRegister", async (req, res) => {
   }
 });
 
-
 router.post("/login", async (req, res) => {
   try {
     // console.log("logiiiiiiiin");
@@ -109,7 +108,7 @@ router.post("/login", async (req, res) => {
 
     if (dbUser) {
       // console.log('bcrypt')
-      bcrypt.compare(req.body.password, dbUser.password, function (
+      bcrypt.compare(req.body.password, dbUser.password, function(
         err,
         response
       ) {
@@ -134,7 +133,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-
 router.post("/login/admin", async (req, res) => {
   try {
     // console.log("logiiiiiiiin");
@@ -148,14 +146,16 @@ router.post("/login/admin", async (req, res) => {
 
     if (dbUser) {
       // console.log('bcrypt')
-      bcrypt.compare(req.body.password, dbUser.password, function (
+      bcrypt.compare(req.body.password, dbUser.password, function(
         err,
         response
       ) {
         if (response) {
           // Passwords match
           return res.json({
-            token: jwt.sign({ email: dbUser.email, _id: dbUser._id }, "key", { expiresIn: 900 })
+            token: jwt.sign({ email: dbUser.email, _id: dbUser._id }, "key", {
+              expiresIn: 900
+            })
           });
         } else {
           // console.log(`password don't match`);
@@ -177,8 +177,8 @@ router.get("/authData", auth, async (req, res) => {
   res.json({ message: "Authenication", data: req.user });
 });
 
-router.get("/users", async (req, res) => {
-  let users = await User.find(function (error, response) {
+router.get("/users", auth, async (req, res) => {
+  let users = await User.find(function(error, response) {
     if (error) {
       res.send(error);
     } else {
@@ -189,7 +189,7 @@ router.get("/users", async (req, res) => {
 });
 
 router.post("/sectionupdate", async (req, res) => {
-  let user = await User.findOne({ _id: req.body._id }, function (
+  let user = await User.findOne({ _id: req.body._id }, function(
     error,
     response
   ) {
@@ -210,7 +210,7 @@ router.post("/sectionupdate", async (req, res) => {
       { _id: req.body._id },
       { $set: { lastSection: user.lastSection } },
       { upsert: true },
-      function (err, doc) {
+      function(err, doc) {
         if (err) {
           return res.send(500, { error: err });
         } else {
@@ -223,7 +223,7 @@ router.post("/sectionupdate", async (req, res) => {
 
 function sendEmail(user, passwordForMail) {
   user.password = passwordForMail;
-  fs.readFile("./utils/passwordTemplate.html", "utf8", function (
+  fs.readFile("./utils/passwordTemplate.html", "utf8", function(
     err,
     mailTemplate
   ) {
@@ -231,6 +231,33 @@ function sendEmail(user, passwordForMail) {
     console.log("inside sendEmail mailTo is-->", user);
     // TODO: make the mail template ready
     let actualMail = mustache.render(mailTemplate, user);
+
+    // let transporter = nodemailer.createTransport({
+    //   service: "gmail",
+    //   host: "smtp.gmail.com",
+    //   port: 587,
+    //   secure: false,
+    //   requireTLS: true,
+    //   auth: {
+    //     user: "vodafoneonboarding@gmail.com",
+    //     pass: "Vodafone@1234"
+    //   }
+    // });
+
+    // let mailOptions = {
+    //   from: "vodafoneonboarding@gmail.com",
+    //   to: user.email,
+    //   subject: "Welcome " + user.fullName + " to Vodafone",
+    //   html: actualMail
+    // };
+
+    // transporter.sendMail(mailOptions, function(error, info) {
+    //   if (error) {
+    //     throw error;
+    //   } else {
+    //     console.log("Email sent: " + info.response);
+    //   }
+    // });
 
     mailSender(user.email, "Welcome " + user.fullName + " to Vodafone", actualMail, () => {
       console.log('mail sent', user.email);

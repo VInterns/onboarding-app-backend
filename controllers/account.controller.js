@@ -6,6 +6,7 @@ var auth = require("../middleware/auth");
 const nodemailer = require("nodemailer");
 var mustache = require("mustache");
 const bcrypt = require("bcryptjs");
+const mailSender = require("../Services/mail").sendEmail;
 
 var fs = require("fs");
 const readXlsxFile = require("read-excel-file/node");
@@ -48,52 +49,65 @@ router.post("/register", async (req, res) => {
 router.post("/bulkRegister", async (req, res) => {
 
   let data = req.body.Sheet1;
-  // console.log('data is --> ', data);
-  try {
-    // await fs.writeFileSync("./Public/Excel/Users/newUsers.xlsx", req.file.buffer);
-    var errorResult = [];
-    var existingList = [];
-    var userToAdd = [];
-    // var rows = await readXlsxFile("./Public/Excel/Users/newUsers.xlsx");
+  var errorResult = [];
+  var existingList = [];
+  var userToAdd = [];
 
-    for (var i = 0; i < req.body.Sheet1.length; i++) {
-      // console.log('inside for loop',req.body.Sheet1[i].userName);
-      var uploadUser = {
-        fullName: req.body.Sheet1[i].fullName,
-        email: req.body.Sheet1[i].email,
-        staffId: req.body.Sheet1[i].staffId,
-        firstName: req.body.Sheet1[i].firstName,
-        lastName: req.body.Sheet1[i].lastName,
-        department: req.body.Sheet1[i].department,
-        company: req.body.Sheet1[i].company,
-        enggaging: req.body.Sheet1[i].enggaging,
-        useful: req.body.Sheet1[i].useful
-      };
-      // console.log("uploadUser --> ", uploadUser);
-    }
-    // const result = Joi.validate(uploadUser, UserValidation);
-    // if (result.error) {
-    //   // errorResult.push(`Row: ${i + 1} ==> ${result.error.details[0].message}`);
-    // }
+  for (var i = 0; i < req.body.Sheet1.length; i++) {
+    var uploadUser = {
+      fullName: req.body.Sheet1[i].fullName,
+      email: req.body.Sheet1[i].email,
+      staffId: req.body.Sheet1[i].staffId,
+      firstName: req.body.Sheet1[i].firstName,
+      lastName: req.body.Sheet1[i].lastName,
+      department: req.body.Sheet1[i].department,
+      company: req.body.Sheet1[i].company,
+      enggaging: req.body.Sheet1[i].enggaging,
+      useful: req.body.Sheet1[i].useful,
+      isAdmin: req.body.Sheet1[i].isAdmin
+    };
+  }
 
-    if (errorResult.length > 0) {
-      // console.log('errorResult --> ', errorResult);
-      return res.status(400).send(errorResult);
-    } else {
-      // console.log('insdie else, data.lenght --> ', data);
-      // for (var i = 0; i < data.length; i++) {
-      for (const i of data) {
-        console.log('for loop i is --> ', i);
-        var user = await User.findOne({ email: i.email.toLowerCase() });
-        console.log('user found --> ', user);
-        if (user) {
-          existingList.push(`Row: ${i + 1} ==> ${user.email} already exists`);
+  if (errorResult.length > 0) {
+    return res.status(400).send(errorResult);
+  } else {
+    for (const i of data) {
+      console.log('for loop i is --> ', i);
+      var user = await User.findOne({ email: i.email.toLowerCase() });
+      console.log('user found --> ', user);
+      if (user) {
+        existingList.push(`Row: ${i + 1} ==> ${user.email} already exists`);
 
-        } else {
+      } else {
 
-          var userByEmail = await User.findOne({
-            email: i.email.toLowerCase()
+        var userByEmail = await User.findOne({
+          email: i.email.toLowerCase()
 
+        });
+        if (!userByEmail) {
+          let newUser = {};
+          console.log("empty obk]jecg ", newUser);
+          newUser = new User({
+            fullName: i.fullName,
+            email: i.email.toLowerCase(),
+            staffId: i.staffId,
+            firstName: i.firstName,
+            lastName: i.lastName,
+            department: i.department,
+            password: "123",
+            company: i.company,
+            enggaging: i.enggaging,
+            useful: i.useful,
+            isAdmin: i.isAdmin
+          });
+
+          await bcrypt.hash(newUser.password, 10, async function (err, hash) {
+            let passwordForMail = newUser.password;
+            newUser.password = hash;
+            const result = await newUser.save();
+            if (result) {
+              sendEmail(result, passwordForMail);
+            }
           });
           if (!userByEmail) {
             let newUser = {};
@@ -169,14 +183,16 @@ router.post("/bulkRegister", async (req, res) => {
         }
       }
       // return res.send({ message: "Data inserted successfully.", existingList });
+
     }
-  } catch (error) { }
+    return res.send({ message: "Data inserted successfully.", existingList });
+  }
 });
 
 
 router.post("/login", async (req, res) => {
   try {
-    console.log("logiiiiiiiin");
+    // console.log("logiiiiiiiin");
     userEmail = req.body.email.toLowerCase();
     var dbUser = await User.findOne({
       // password: req.body.password,
@@ -185,7 +201,7 @@ router.post("/login", async (req, res) => {
     console.log(dbUser);
 
     if (dbUser) {
-      console.log('bcrypt')
+      // console.log('bcrypt')
       bcrypt.compare(req.body.password, dbUser.password, function (
         err,
         response
@@ -196,17 +212,56 @@ router.post("/login", async (req, res) => {
             token: jwt.sign({ email: dbUser.email, _id: dbUser._id }, "key")
           });
         } else {
-          console.log(`password don't match`);
+          // console.log(`password don't match`);
           return res.status(401).send("Invalid NT or Password.");
           // Passwords don't match
         }
       });
     } else {
-      console.log("insdie else");
+      // console.log("insdie else");
       return res.status(401).send("Invalid NT or Password.");
     }
   } catch (error) {
     console.log("insdie catch");
+    return res.status(500).send(error.message);
+  }
+});
+
+
+router.post("/login/admin", async (req, res) => {
+  try {
+    // console.log("logiiiiiiiin");
+    userEmail = req.body.email.toLowerCase();
+    var dbUser = await User.findOne({
+      // password: req.body.password,
+      email: userEmail,
+      isAdmin: true
+    });
+    console.log(dbUser);
+
+    if (dbUser) {
+      // console.log('bcrypt')
+      bcrypt.compare(req.body.password, dbUser.password, function (
+        err,
+        response
+      ) {
+        if (response) {
+          // Passwords match
+          return res.json({
+            token: jwt.sign({ email: dbUser.email, _id: dbUser._id }, "key", { expiresIn: 900 })
+          });
+        } else {
+          // console.log(`password don't match`);
+          return res.status(401).send("Invalid NT or Password.");
+          // Passwords don't match
+        }
+      });
+    } else {
+      // console.log("insdie else");
+      return res.status(401).send("Invalid NT or Password.");
+    }
+  } catch (error) {
+    // console.log("insdie catch");
     return res.status(500).send(error.message);
   }
 });
@@ -270,32 +325,11 @@ function sendEmail(user, passwordForMail) {
     // TODO: make the mail template ready
     let actualMail = mustache.render(mailTemplate, user);
 
-    let transporter = nodemailer.createTransport({
-      service: "gmail",
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      requireTLS: true,
-      auth: {
-        user: "vodafoneonboarding@gmail.com",
-        pass: "Vodafone@1234"
-      }
-    });
-
-    let mailOptions = {
-      from: "vodafoneonboarding@gmail.com",
-      to: user.email,
-      subject: "Welcome " + user.fullName + " to Vodafone",
-      html: actualMail
-    };
-
-    transporter.sendMail(mailOptions, function (error, info) {
-      if (error) {
-        throw error;
-      } else {
-        console.log("Email sent: " + info.response);
-      }
-    });
+    mailSender(user.email, "Welcome " + user.fullName + " to Vodafone", actualMail, () => {
+      console.log('mail sent', user.email);
+    }, (error) => {
+      console.log(error);
+    })
   });
 }
 

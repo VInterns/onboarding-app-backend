@@ -5,10 +5,8 @@ var router = express.Router();
 var { User } = require("../models/user.model");
 var auth = require("../middleware/auth");
 
-
 router.post("/addSurvey", async (req, res) => {
-
-    console.log('inside addSuvey api', req.body);
+    console.log("inside addSuvey api", req.body);
     var data = req.body;
 
     try {
@@ -24,13 +22,27 @@ router.post("/addSurvey", async (req, res) => {
         if (result) {
             res.status(200).send("Survey Added Successfully");
         }
+
     } catch (error) {
         return res.status(400).send(error.message);
     }
+
 });
 
-//get Engaging 1 : count 
-//get Engaging 2 : count 
+router.get("/list", auth, async (req, res) => {
+    let users = await User.find({ enggaging: { $ne: '' }, useful: { $ne: '' } }, function (error, response) {
+        if (error) {
+            res.send(error);
+        } else {
+            console.log("response", response);
+
+            var result = response.map(val => {
+                return { id: val._id, fullName: val.fullName, useful: val.useful, enggaging: val.enggaging, comment: val.comment };
+            });
+            res.send(result);
+        }
+    });
+});
 
 router.get("/ratingCount", async (req, res) => {
 
@@ -47,7 +59,6 @@ router.get("/ratingCount", async (req, res) => {
         useful4: Number,
         useful5: Number
     }
-    // console.log("users in rating count API : ", users);
     ratingModel.enggaging1 = getCount("enggaging", 1, users);
     ratingModel.enggaging2 = getCount("enggaging", 2, users);
     ratingModel.enggaging3 = getCount("enggaging", 3, users);
@@ -59,7 +70,6 @@ router.get("/ratingCount", async (req, res) => {
     ratingModel.useful4 = getCount("useful", 4, users);
     ratingModel.useful5 = getCount("useful", 5, users);
     res.status(200).send(ratingModel);
-    //console.log("Rating model", ratingModel);
 });
 
 function getCount(type, number, users) {
@@ -75,4 +85,3 @@ function getCount(type, number, users) {
 }
 
 module.exports = router;
-
